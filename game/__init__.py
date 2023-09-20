@@ -1,4 +1,3 @@
-from .cube import Cube
 from .icosahedron import Icosahedron, Planet
 from .camera import Camera
 from .world import WorldPoint, WorldLine, WorldPolygon

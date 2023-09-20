@@ -16,6 +16,7 @@ class Camera:
         self.rotation = Rotation(0, 0)
         self.clipping_planes = (1, 15)
         self.fov = 0.6 * pi
+        self.light_direction = WorldPoint(-1, -1, -1).normalize()
 
     def __repr__(self):
         return f"Camera(position: {self.position}, rotation: {self.rotation}, clippings: {self.clipping_planes}, fov: {self.fov})"
@@ -57,3 +58,10 @@ class Camera:
         x, y, z = relative_point
         k = 0.5 / tan(0.5 * self.fov)
         return WindowPoint(-k * y / x, k * z / x)
+    
+    def light(self, surface_normal):
+        nx, ny, nz = surface_normal.normalize()
+        lx, ly, lz = self.light_direction
+        a = lx * nx + ly * ny + lz * nz
+        return a if a > 0 else 0
+

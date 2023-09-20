@@ -20,7 +20,7 @@ class Player:
         """
         lr is -1, 0, 1 for right, no movement, left
         ud is -1, 0, 1 for forward, no movement, backward
-        cs is -1, 0, 1 for up, no movement, down
+        cs is -1, 0, 1 for down, no movement, up
         dt is delta time
         rotation_xy is the xy plane rotation of the camera
         returns delta movement

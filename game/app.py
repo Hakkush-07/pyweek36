@@ -83,17 +83,18 @@ class App:
             # draw faces
             for polygon in planet.faces:
                 f = self.camera.render_polygon(polygon)
-                dx, dy, dz = self.camera.relative_position(polygon.center)
-                distance = (dx * dx + dy * dy + dz * dz) ** 0.5
                 if f:
                     clipped_f = f.clipped(-1, -self.h / self.w, 1, self.h / self.w)
                     if clipped_f:
-                        polygons.append((distance, [self.to_window_tuple(p) for p in clipped_f.vertices]))
+                        distance = abs(self.camera.relative_position(polygon.center))
+                        normal = polygon.normal(planet.center)
+                        polygons.append((distance, [self.to_window_tuple(p) for p in clipped_f.vertices], normal))
                         # pygame.draw.polygon(self.window, YELLOW, [self.to_window_tuple(p) for p in clipped_f.vertices])
             planet.update()
-        for distance, vertices in sorted(polygons, key=lambda x: -x[0]):
-            u = int(255 - 15 * distance)
-            color = (u, u, 100)
+        for distance, vertices, normal in sorted(polygons, key=lambda x: -x[0]):
+            light = self.camera.light(normal)
+            u = int(255 - 255 * light)
+            color = (u, u, 0)
             pygame.draw.polygon(self.window, color, vertices)
         self.window.blit(pygame.font.Font(None, 32).render(str(int(App.FPS)), True, WHITE), (10, 10))
         self.window.blit(pygame.transform.scale(spaceship.convert_alpha(), (self.w, int(self.w * spaceship.get_height()/ spaceship.get_width()))), (0, 0))

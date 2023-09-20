@@ -7,7 +7,7 @@ faces = [(0, 2, 8), (0, 2, 9), (0, 4, 6), (0, 4, 8), (0, 6, 9), (1, 3, 10), (1, 
 
 class Icosahedron:
     """
-    planet in the world
+    icosahedron in the world
     center coordinates are WorldPoint
     s is scale
     """
@@ -19,20 +19,24 @@ class Icosahedron:
         self.s = s
         self.k = 0.0
 
-        self.corners = [WorldPoint(self.x + x * s, self.y + y * s, self.z + z * s) for x, y, z in corners]
-        self.edges = [WorldLine(self.corners[i], self.corners[j]) for i, j in edges]
-        self.faces = [WorldPolygon([self.corners[i], self.corners[j], self.corners[k]]) for i, j, k in faces]
+        self.corners = [self.center + WorldPoint(x, y, z) * self.s for x, y, z in corners]
     
-    def update_polyhedron(self, new_corners):
-        self.corners = new_corners
-        self.edges = [WorldLine(self.corners[i], self.corners[j]) for i, j in edges]
-        self.faces = [WorldPolygon([self.corners[i], self.corners[j], self.corners[k]]) for i, j, k in faces]
+    @property
+    def edges(self):
+        return [WorldLine(self.corners[i], self.corners[j]) for i, j in edges]
+
+    @property
+    def faces(self):
+        return [WorldPolygon([self.corners[i], self.corners[j], self.corners[k]]) for i, j, k in faces]
 
 class Planet(Icosahedron):
+    """
+    planet in the space
+    """
     def __init__(self, cx, cy, cz, s):
         super().__init__(cx, cy, cz, s)
     
     def update(self):
         self.k += 0.01
-        new = [self.center + WorldPoint(*c).rotate_z(self.k).rotate_y(self.k).rotate_x(self.k) * self.s for c in corners]
-        self.update_polyhedron(new)
+        self.corners = [self.center + WorldPoint(*c).rotate_z(self.k).rotate_y(self.k).rotate_x(self.k) * self.s for c in corners]
+

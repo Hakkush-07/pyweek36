@@ -35,6 +35,12 @@ class WorldPoint:
     def __mul__(self, k):
         return WorldPoint(self.x * k, self.y * k, self.z * k)
     
+    def __abs__(self):
+        return (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5
+
+    def normalize(self):
+        return self * (1 / abs(self))
+    
     def rotate_z(self, a):
         """
         rotates around z axis
@@ -132,6 +138,23 @@ class WorldPolygon:
     @property
     def center(self):
         return sum(self.vertices) * (1 / len(self.vertices))
+    
+    def normal(self, c):
+        """
+        assume polygon is triangle for now
+        normal points towards the opposite side of c
+        """
+        p1, p2, p3 = self.vertices
+        ux, uy, uz = p1 - p2
+        vx, vy, vz = p1 - p3
+        nx = uy * vz - uz * vy
+        ny = uz * vx - ux * vz
+        nz = ux * vy - uy * vx
+        px, py, pz = p1
+        cx, cy, cz = c
+        a = nx * (cx - px) + ny * (cy - py) + nz * (cz - pz)
+        n = WorldPoint(nx, ny, nz)
+        return n * (-1 if a > 0 else 1)
     
     def clip_min_x(self, border):
         """
