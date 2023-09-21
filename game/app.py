@@ -4,6 +4,7 @@ import sys
 from .colors import *
 from .player import Player
 from .camera import Camera
+from .gravity import Gravity
 
 spaceship = pygame.image.load("spaceship.png")
 
@@ -51,18 +52,24 @@ class App:
         self.clock = pygame.time.Clock()
         self.camera = Camera()
         self.player = Player()
+        self.gravity = Gravity()
         self.planets = planets if planets else []
         self.timer = 0
-    
+        self.free = False
+
+        self.G = 0
+        self.V = 0
+        
     def to_window_tuple(self, window_point):
         """
         converts WindowPoint to pygame window pixel coordinates
         """
         return window_point.x * self.w + 0.5 * self.w, -window_point.y * self.w + 0.5 * self.h
     
-    def handle_quit(self):
+    def handle_quit_and_free(self):
         """
         handles quit events, esc key and exit button
+        if u is pressed, switches between free mode and game mode
         """
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -72,6 +79,12 @@ class App:
                 if event.key == K_ESCAPE:
                     pygame.quit()
                     sys.exit()
+                elif event.key == K_u:
+                    if self.free:
+                        self.free = False
+                    else:
+                        self.free = True
+                        self.player.reset_v()
     
     def draw_things(self):
         """
@@ -96,8 +109,10 @@ class App:
             u = int(255 - 255 * light)
             color = (u, u, 0)
             pygame.draw.polygon(self.window, color, vertices)
-        self.window.blit(pygame.font.Font(None, 32).render(str(int(App.FPS)), True, WHITE), (10, 10))
         self.window.blit(pygame.transform.scale(spaceship.convert_alpha(), (self.w, int(self.w * spaceship.get_height()/ spaceship.get_width()))), (0, 0))
+        self.window.blit(pygame.font.Font(None, 32).render(str(int(App.FPS)), True, WHITE), (10, 10))
+        self.window.blit(pygame.font.Font(None, 32).render("G: " + str(self.G), True, WHITE), (10, 110))
+        self.window.blit(pygame.font.Font(None, 32).render("V: " + str(self.V), True, WHITE), (10, 210))
         pygame.display.flip()
 
     def handle_movement(self, dt):
@@ -107,8 +122,18 @@ class App:
         keys = pygame.key.get_pressed()
         a = keys[K_a] - keys[K_d]
         b = keys[K_w] - keys[K_s]
-        c = keys[K_x] - keys[K_z] # (keys[K_LCTRL] or keys[K_RCTRL]) - (keys[K_LSHIFT] or keys[K_RSHIFT])
+        c = keys[K_t] - keys[K_g] # (keys[K_LCTRL] or keys[K_RCTRL]) - (keys[K_LSHIFT] or keys[K_RSHIFT])
         self.camera.position += self.player.move(a, b, c, dt, self.camera.rotation.a)
+    
+    def handle_movement2(self, dt):
+        """
+        applies force based on WASD key presses
+        """
+        keys = pygame.key.get_pressed()
+        a = keys[K_a] - keys[K_d]
+        b = keys[K_w] - keys[K_s]
+        c = keys[K_t] - keys[K_g]
+        self.player.accelerate(a, b, c, dt, self.camera.rotation.a)
     
     def handle_rotation(self, dt):
         """
@@ -116,6 +141,14 @@ class App:
         """
         a, b = pygame.mouse.get_rel()
         self.camera.rotation += self.player.rotate(a, b, dt)
+    
+    def handle_rotation2(self, dt):
+        """
+        handles rotation based on keys
+        """
+        keys = pygame.key.get_pressed()
+        r = keys[K_m] - keys[K_n]
+        self.camera.rotation += self.player.rotate(r, 0, dt)
     
     def time_calculations(self):
         fps = self.clock.get_fps()
@@ -126,14 +159,26 @@ class App:
             self.timer = 0
             App.FPS = fps if fps else 120
         return dt
-
+    
     def run(self):
         pygame.mouse.set_visible(False)
         pygame.event.set_grab(True)
         while True:
             dt = self.time_calculations()
-            self.handle_quit()
+            self.handle_quit_and_free()
             self.draw_things()
-            self.handle_movement(dt)
-            self.handle_rotation(dt)
+            if self.free:
+                self.handle_movement(dt)
+                self.handle_rotation(dt)
+            else:
+                self.handle_movement2(dt)
+                self.handle_rotation2(dt)
+                self.gravity.update(dt)
+                g = self.gravity.get(self.camera.position)
+                self.G = round(abs(g), 2)
+                acc = g * dt
+                self.player.v += acc
+                self.V = round(abs(self.player.v), 2)
+            if dt:
+                self.camera.position += self.player.v * dt
             

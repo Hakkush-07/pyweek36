@@ -32,11 +32,14 @@ class Icosahedron:
 class Planet(Icosahedron):
     """
     planet in the space
+    r is the rotation speed
     """
-    def __init__(self, cx, cy, cz, s):
+    def __init__(self, cx, cy, cz, s, r, color):
         super().__init__(cx, cy, cz, s)
+        self.r = r
+        self.color = color
     
     def update(self):
-        self.k += 0.01
+        self.k += self.r
         self.corners = [self.center + WorldPoint(*c).rotate_z(self.k).rotate_y(self.k).rotate_x(self.k) * self.s for c in corners]
 

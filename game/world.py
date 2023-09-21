@@ -39,7 +39,7 @@ class WorldPoint:
         return (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5
 
     def normalize(self):
-        return self * (1 / abs(self))
+        return self * (1 / abs(self)) if abs(self) else self
     
     def rotate_z(self, a):
         """

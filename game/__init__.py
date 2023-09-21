@@ -4,3 +4,4 @@ from .world import WorldPoint, WorldLine, WorldPolygon
 from .window import WindowPoint, WindowLine, WindowPolygon
 from .rotation import Rotation
 from .app import App
+from .colors import *

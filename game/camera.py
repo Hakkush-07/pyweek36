@@ -12,9 +12,9 @@ class Camera:
     fov is the field of view angle in radians
     """
     def __init__(self):
-        self.position = WorldPoint(0, 0, 0)
+        self.position = WorldPoint(0, 0, 1)
         self.rotation = Rotation(0, 0)
-        self.clipping_planes = (1, 15)
+        self.clipping_planes = (1, 25)
         self.fov = 0.6 * pi
         self.light_direction = WorldPoint(-1, -1, -1).normalize()
 
