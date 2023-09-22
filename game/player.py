@@ -6,6 +6,7 @@ class Player:
     def __init__(self):
         self.velocity = 4.0
         self.sensitivity = 2.0
+        self.force = 2.0
         self.v = WorldPoint(0, 0, 0)
 
     def rotate(self, horizontal, vertical, dt):
@@ -55,7 +56,7 @@ class Player:
         dvx = (c * ud - s * lr) * u
         dvy = (s * ud + c * lr) * u
         dvz = cs * u
-        dv = WorldPoint(dvx, dvy, dvz)
+        dv = WorldPoint(dvx, dvy, dvz) * self.force
         self.v += dv
         
     def reset_v(self):
