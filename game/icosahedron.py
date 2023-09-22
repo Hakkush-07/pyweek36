@@ -37,7 +37,7 @@ class Planet(Icosahedron):
     def __init__(self, cx, cy, cz, s, r, color):
         super().__init__(cx, cy, cz, s)
         self.r = r
-        self.color = color
+        self.color = color # (hue, between 0 and 360)
     
     def update(self):
         self.k += self.r

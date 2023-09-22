@@ -1,7 +1,7 @@
 from .world import WorldPoint
 from random import random
 
-max_gravity = 0.1
+max_gravity = 0.5
 
 def randomx():
     return random() - 0.5

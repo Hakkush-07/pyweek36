@@ -5,40 +5,9 @@ from .colors import *
 from .player import Player
 from .camera import Camera
 from .gravity import Gravity
+from .icosahedron import Planet
 
 spaceship = pygame.image.load("spaceship.png")
-
-"""
-# draw edges
-            for line in planet.edges:
-                l = self.camera.render_line(line)
-                if l:
-                    clipped_l = l.clipped(-1, -self.h / self.w, 1, self.h / self.w)
-                    if clipped_l:
-                        clipped_p1, clipped_p2 = clipped_l
-                        pygame.draw.line(self.window, BLACK, self.to_window_tuple(clipped_p1), self.to_window_tuple(clipped_p2), 5)
-            # draw corners
-            for point in planet.corners:
-                p = self.camera.render_point(point)
-                if p:
-                    clipped_p = p.clipped(-1, -self.h / self.w, 1, self.h / self.w)
-                    if clipped_p:
-                        pygame.draw.circle(self.window, BLACK, self.to_window_tuple(clipped_p), 3)
-"""
-
-
-"""
-for star in self.stars:
-            p = self.camera.render_point(star.p)
-            dx, dy, dz = self.camera.relative_position(star.p)
-            distance = (dx * dx + dy * dy + dz * dz) ** 0.5
-            print(dx, dy, dz, distance)
-            # print(star.s(distance))
-            if p:
-                clipped_p = p.clipped(-1, -self.h / self.w, 1, self.h / self.w)
-                if clipped_p:
-                    pygame.draw.circle(self.window, STAR, self.to_window_tuple(clipped_p), star.s(distance))
-"""
 
 class App:
     FPS = 120
@@ -56,9 +25,13 @@ class App:
         self.planets = planets if planets else []
         self.timer = 0
         self.free = False
+        self.start_screen = True
+        self.start_planet = Planet(4, 0, 0, 0.5, 0.001, 180)
+        self.start_center = self.to_window_tuple(self.camera.render_point(self.start_planet.center))
+        self.start_mouse_inside = False
 
-        self.G = 0
-        self.V = 0
+        self.G = 0, 0, 0
+        self.V = 0, 0, 0
         
     def to_window_tuple(self, window_point):
         """
@@ -80,11 +53,16 @@ class App:
                     pygame.quit()
                     sys.exit()
                 elif event.key == K_u:
-                    if self.free:
-                        self.free = False
-                    else:
-                        self.free = True
-                        self.player.reset_v()
+                    if not self.start_screen:
+                        if self.free:
+                            self.free = False
+                        else:
+                            self.free = True
+                            self.player.reset_v()
+            elif event.type == MOUSEBUTTONDOWN:
+                if self.start_screen and self.start_mouse_inside:
+                    self.start_screen = False
+                    self.hide_mouse()
     
     def draw_things(self):
         """
@@ -101,18 +79,51 @@ class App:
                     if clipped_f:
                         distance = abs(self.camera.relative_position(polygon.center))
                         normal = polygon.normal(planet.center)
-                        polygons.append((distance, [self.to_window_tuple(p) for p in clipped_f.vertices], normal))
+                        polygons.append((distance, [self.to_window_tuple(p) for p in clipped_f.vertices], normal, planet.color))
                         # pygame.draw.polygon(self.window, YELLOW, [self.to_window_tuple(p) for p in clipped_f.vertices])
             planet.update()
-        for distance, vertices, normal in sorted(polygons, key=lambda x: -x[0]):
+        for distance, vertices, normal, hue in sorted(polygons, key=lambda x: -x[0]):
             light = self.camera.light(normal)
-            u = int(255 - 255 * light)
-            color = (u, u, 0)
+            color = hsv2rgb(hue, 1.0, light)
             pygame.draw.polygon(self.window, color, vertices)
         self.window.blit(pygame.transform.scale(spaceship.convert_alpha(), (self.w, int(self.w * spaceship.get_height()/ spaceship.get_width()))), (0, 0))
         self.window.blit(pygame.font.Font(None, 32).render(str(int(App.FPS)), True, WHITE), (10, 10))
         self.window.blit(pygame.font.Font(None, 32).render("G: " + str(self.G), True, WHITE), (10, 110))
         self.window.blit(pygame.font.Font(None, 32).render("V: " + str(self.V), True, WHITE), (10, 210))
+        pygame.display.flip()
+    
+    def draw_start_screen(self):
+        self.window.fill(SPACE)
+        polygons = []
+        for polygon in self.start_planet.faces:
+            f = self.camera.render_polygon(polygon)
+            if f:
+                clipped_f = f.clipped(-1, -self.h / self.w, 1, self.h / self.w)
+                if clipped_f:
+                    distance = abs(self.camera.relative_position(polygon.center))
+                    normal = polygon.normal(self.start_planet.center)
+                    polygons.append((distance, [self.to_window_tuple(p) for p in clipped_f.vertices], normal, self.start_planet.color))
+        self.start_planet.update()
+        for distance, vertices, normal, hue in sorted(polygons, key=lambda x: -x[0]):
+            light = self.camera.light(normal)
+            color = hsv2rgb(hue, 1.0, light)
+            pygame.draw.polygon(self.window, color, vertices)
+        cx, cy = self.start_center
+        k = 100
+        mx, my = pygame.mouse.get_pos()
+        if abs(mx - cx) < k and abs(my - cy) < k:
+            font = 100
+            self.start_planet.r = 0.003
+            self.start_mouse_inside = True
+        else:
+            font = 64
+            self.start_planet.r = 0.001
+            self.start_mouse_inside = False
+        x = pygame.font.Font(None, font).render("START", True, WHITE)
+        w = x.get_bounding_rect().width
+        h = x.get_bounding_rect().height
+        
+        self.window.blit(x, (cx - w // 2, cy - h // 2))
         pygame.display.flip()
 
     def handle_movement(self, dt):
@@ -160,25 +171,35 @@ class App:
             App.FPS = fps if fps else 120
         return dt
     
-    def run(self):
+    def hide_mouse(self):
         pygame.mouse.set_visible(False)
         pygame.event.set_grab(True)
+    
+    def run(self):
         while True:
-            dt = self.time_calculations()
-            self.handle_quit_and_free()
-            self.draw_things()
-            if self.free:
-                self.handle_movement(dt)
-                self.handle_rotation(dt)
+            if self.start_screen:
+                self.handle_quit_and_free()
+                self.draw_start_screen()
             else:
-                self.handle_movement2(dt)
-                self.handle_rotation2(dt)
-                self.gravity.update(dt)
-                g = self.gravity.get(self.camera.position)
-                self.G = round(abs(g), 2)
-                acc = g * dt
-                self.player.v += acc
-                self.V = round(abs(self.player.v), 2)
-            if dt:
-                self.camera.position += self.player.v * dt
-            
+                dt = self.time_calculations()
+                self.handle_quit_and_free()
+                self.draw_things()
+                if self.free:
+                    self.handle_movement(dt)
+                    self.handle_rotation(dt)
+                else:
+                    self.handle_movement2(dt)
+                    self.handle_rotation2(dt)
+                    self.gravity.update(dt)
+                    g = self.gravity.get(self.camera.position)
+                    # self.G = round(abs(g), 2)
+                    gx, gy, gz = g
+                    self.G = (round(gx, 2), round(gy, 2), round(gz, 2))
+                    acc = g * dt
+                    self.player.v += acc
+                    vx, vy, vz = self.player.v
+                    # self.V = round(abs(self.player.v), 2)
+                    self.V = (round(vx, 2), round(vy, 2), round(vz, 2))
+                if dt:
+                    self.camera.position += self.player.v * dt
+                
