@@ -1,20 +1,20 @@
 from .world import WorldPoint
 from random import random
 
-max_gravity = 0.5
+max_gravity = 0.0
 
 def randomx():
     return random() - 0.5
 
-def clip(x):
-    return 0 if x < 0 else 1 if x > 1 else x
+def clip(x, mn=0):
+    return mn if x < mn else 1 if x > 1 else x
 
 class Gravity:
     def __init__(self) -> None:
         self.r1 = WorldPoint(randomx(), randomx(), randomx())
         self.r2 = WorldPoint(randomx(), randomx(), randomx())
         self.r3 = WorldPoint(randomx(), randomx(), randomx())
-        self.a = random()
+        self.a = random() / 2 + 0.5
     
     def get(self, position):
         r1x, r1y, r1z = self.r1.normalize()
@@ -24,7 +24,7 @@ class Gravity:
         fx = r1x * px + r1y * py + r1z * pz
         fy = r2x * px + r2y * py + r2z * pz
         fz = r3x * px + r3y * py + r3z * pz
-        return WorldPoint(fx, fy, fz) * self.a * max_gravity
+        return WorldPoint(fx, fy, fz).normalize() * self.a * max_gravity
 
     def update(self, dt):
         dr1 = WorldPoint(randomx(), randomx(), randomx()) * 0.1 * dt
@@ -46,7 +46,7 @@ class Gravity:
         self.r3.x = clip(self.r3.z)
 
         da = randomx()
-        self.a += da * 0.1 * dt
-        self.a = clip(self.a)
+        self.a += da * dt * 5
+        self.a = clip(self.a, 0.5)
         
     

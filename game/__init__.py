@@ -1,4 +1,4 @@
-from .icosahedron import Icosahedron, Planet
+from .icosahedron import Icosahedron, Planet, generate_random_planets
 from .camera import Camera
 from .world import WorldPoint, WorldLine, WorldPolygon
 from .window import WindowPoint, WindowLine, WindowPolygon

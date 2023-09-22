@@ -6,6 +6,8 @@ from .player import Player
 from .camera import Camera
 from .gravity import Gravity
 from .icosahedron import Planet
+from .world import WorldPoint
+from random import choice
 
 spaceship = pygame.image.load("spaceship.png")
 
@@ -30,6 +32,10 @@ class App:
         self.start_center = self.to_window_tuple(self.camera.render_point(self.start_planet.center))
         self.start_mouse_inside = False
 
+        self.objective = None
+        self.set_objective()
+        self.score = 0
+
         self.G = 0, 0, 0
         self.V = 0, 0, 0
         
@@ -43,6 +49,7 @@ class App:
         """
         handles quit events, esc key and exit button
         if u is pressed, switches between free mode and game mode
+        if o is pressed in free mode, camera rotation is reseted
         """
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -59,6 +66,11 @@ class App:
                         else:
                             self.free = True
                             self.player.reset_v()
+                elif event.key == K_o:
+                    if not self.start_screen and self.free:
+                        self.camera.reset_rotation()
+                elif event.key == K_x:
+                    self.check_collision()
             elif event.type == MOUSEBUTTONDOWN:
                 if self.start_screen and self.start_mouse_inside:
                     self.start_screen = False
@@ -71,6 +83,8 @@ class App:
         self.window.fill(SPACE)
         polygons = []
         for planet in self.planets:
+            if abs(self.camera.position - planet.center) > planet.radius + self.camera.clipping_planes[1]:
+                continue
             # draw faces
             for polygon in planet.faces:
                 f = self.camera.render_polygon(polygon)
@@ -86,10 +100,20 @@ class App:
             light = self.camera.light(normal)
             color = hsv2rgb(hue, 1.0, light)
             pygame.draw.polygon(self.window, color, vertices)
-        self.window.blit(pygame.transform.scale(spaceship.convert_alpha(), (self.w, int(self.w * spaceship.get_height()/ spaceship.get_width()))), (0, 0))
+        self.window.blit(pygame.transform.scale(spaceship.convert_alpha(), (self.w, int(self.w * spaceship.get_height() / spaceship.get_width()))), (0, 0))
         self.window.blit(pygame.font.Font(None, 32).render(str(int(App.FPS)), True, WHITE), (10, 10))
         self.window.blit(pygame.font.Font(None, 32).render("G: " + str(self.G), True, WHITE), (10, 110))
+        self.window.blit(pygame.font.Font(None, 32).render("G: " + str(abs(WorldPoint(*self.G))), True, WHITE), (10, 150))
         self.window.blit(pygame.font.Font(None, 32).render("V: " + str(self.V), True, WHITE), (10, 210))
+        d = round(abs(self.camera.position - self.objective.center), 2)
+        self.window.blit(pygame.font.Font(None, 32).render("D: " + str(d), True, WHITE), (10, 310))
+        self.window.blit(pygame.font.Font(None, 32).render("S: " + str(self.score), True, WHITE), (10, 410))
+        x, y, _ = self.camera.relative_position(self.objective.center)
+        t = (x ** 2 + y ** 2) ** 0.5
+        ax, ay = x / t, y / t
+        
+        pygame.draw.circle(self.window, RED, (70, 70), 3)
+        pygame.draw.line(self.window, RED, (70, 70), (70 - 30 * ay, 70 - 30 * ax), 2)
         pygame.display.flip()
     
     def draw_start_screen(self):
@@ -174,6 +198,21 @@ class App:
     def hide_mouse(self):
         pygame.mouse.set_visible(False)
         pygame.event.set_grab(True)
+
+    def set_objective(self):
+        self.objective = choice(self.planets)
+
+    def check_collision(self):
+        relative = self.camera.relative_position(self.objective.center)
+        d = abs(relative)
+        if d > self.camera.clipping_planes[1]:
+            return
+        w = WorldPoint(d, 0, 0)
+        if abs(w - relative) > self.objective.radius:
+            return
+        self.planets.remove(self.objective)
+        self.set_objective()
+        self.score += 1
     
     def run(self):
         while True:

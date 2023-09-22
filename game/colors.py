@@ -6,7 +6,7 @@ BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 GRAY = (150, 150, 150)
 LIGHT_BLUE = (150, 150, 255)
-SPACE = (20, 20, 80)
+SPACE = (15, 15, 60)
 STAR = (255, 255, 100)
 
 def hsv2rgb(h, s, v):

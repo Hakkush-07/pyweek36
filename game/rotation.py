@@ -1,3 +1,8 @@
+from math import pi
+
+def clip_z_rotation(zr, epsilon):
+    return -pi / 2 + epsilon if zr < -pi / 2 + epsilon else pi / 2 - epsilon if zr > pi / 2 - epsilon else zr
+
 class Rotation:
     def __init__(self, alpha, beta):
         """
@@ -12,7 +17,7 @@ class Rotation:
         return f"Rotation({self.a}, {self.b}))"
     
     def __add__(self, other):
-        return Rotation(self.a + other.a, self.b + other.b)
+        return Rotation(self.a + other.a, clip_z_rotation(self.b + other.b, 0.1))
 
     def __iadd__(self, other):
         return self + other
