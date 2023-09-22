@@ -4,6 +4,8 @@ Topic: **Dark Matter**
 
 Idea: In a 3D space (for 3D pygame, I used my own repo [pygame3D](https://github.com/Hakkush-07/pygame-3D)) full of planets, the player travels with a spaceship. There exists unpredictable gravity due to dark matter! Can you reach your destination in time?
 
+![image](ss.png)
+
 ## Controls
 
 - **ESC** -> quits
