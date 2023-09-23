@@ -9,7 +9,7 @@ from .icosahedron import Planet, generate_random_planets
 from .world import WorldPoint
 from random import choice
 
-spaceship = pygame.image.load("spaceship.png")
+spaceship = pygame.image.load("assets/spaceship.png")
 
 class App:
     FPS = 120
@@ -110,7 +110,7 @@ class App:
         self.window.blit(pygame.font.Font(None, 32).render(f"Gravity: {self.G}", True, WHITE), (10, 40))
         self.window.blit(pygame.font.Font(None, 32).render(f"[{round(abs(WorldPoint(*self.G)), 2)}]", True, WHITE), (300, 40))
         self.window.blit(pygame.font.Font(None, 32).render(f"Velocity: {self.V}", True, WHITE), (10, 70))
-        self.window.blit(pygame.font.Font(None, 32).render(f"Score: {self.score}", True, WHITE), (10, 230))
+        self.window.blit(pygame.font.Font(None, 32).render(f"Score: {self.score}", True, WHITE), (10, 100))
         x, y, _ = self.camera.relative_position(self.objective.center)
         t = (x ** 2 + y ** 2) ** 0.5
         ax, ay = x / t, y / t
@@ -165,8 +165,11 @@ class App:
         x = pygame.font.Font(None, font).render("START", True, WHITE)
         w = x.get_bounding_rect().width
         h = x.get_bounding_rect().height
-        
         self.window.blit(x, (cx - w // 2, cy - h // 2))
+        x = pygame.font.Font(None, 300).render("Dark Gravity", True, LIGHT_BLUE)
+        w = x.get_bounding_rect().width
+        h = x.get_bounding_rect().height
+        self.window.blit(x, (cx - w // 2, cy - h // 2 - 300))
         pygame.display.flip()
     
     def draw_end_screen(self):
@@ -250,7 +253,7 @@ class App:
     def set_objective(self):
         self.objective = choice(self.planets)
         d = abs(self.camera.relative_position(self.objective.center))
-        self.time_left = d * 0.5
+        self.time_left = d * 0.6
 
     def check_collision(self):
         relative = self.camera.relative_position(self.objective.center)
